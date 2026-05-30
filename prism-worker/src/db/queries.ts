@@ -74,7 +74,12 @@ export async function getAuditsByUrl(
         .bind(url, limit)
         .all();
 
-    return result.results;
+    return result.results.map((row: any) => ({
+        ...row,
+        issues: typeof row.issues === "string"
+            ? JSON.parse(row.issues)
+            : row.issues,
+    }));
 }
 
 export async function getAuditById(
@@ -98,9 +103,16 @@ export async function getAuditById(
             GROUP BY a.id`
         )
         .bind(auditId)
-        .first();
+        .first() as any;
 
-    return result ?? null;
+    if (!result) return null;
+
+    return {
+        ...result,
+        issues: typeof result.issues === "string"
+            ? JSON.parse(result.issues)
+            : result.issues,
+    };
 }
 
 export async function getRecentAudits(
