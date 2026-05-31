@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { startAudit, getErrorMessage } from "@/lib/api";
 import type { AuditSummary } from "@/lib/types";
@@ -21,11 +21,21 @@ interface HomeClientProps {
 
 export function HomeClient({ initialAudits, initialError }: HomeClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [url, setUrl] = React.useState("");
   const audits = initialAudits;
   const [formError, setFormError] = React.useState<string | null>(null);
   const [status, setStatus] = React.useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const prefillUrl = searchParams.get("url");
+
+  React.useEffect(() => {
+    if (!prefillUrl) {
+      return;
+    }
+
+    setUrl((current) => (current ? current : prefillUrl));
+  }, [prefillUrl]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -53,118 +63,51 @@ export function HomeClient({ initialAudits, initialError }: HomeClientProps) {
   return (
     <div className="space-y-16 pb-20">
       <section className="mx-auto w-full max-w-6xl px-6 pt-16">
-        <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="space-y-6 animate-fade-up">
-            <div className="flex flex-wrap items-center gap-3">
-              <Badge>Edge-native</Badge>
-              <span className="text-xs font-mono uppercase tracking-[0.3em] text-muted">
-                Prism Audit Console
-              </span>
-            </div>
-            <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-              Launch accessibility audits from the edge.
-            </h1>
-            <p className="text-base text-muted-2 sm:text-lg">
-              Prism runs Lighthouse-inspired checks directly on Cloudflare Workers.
-              Validate contrast, semantics, and structure without leaving your
-              workflow.
-            </p>
-            <form className="space-y-3" onSubmit={handleSubmit}>
-              <Label htmlFor="audit-url">Target URL</Label>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Input
-                  id="audit-url"
-                  name="url"
-                  type="url"
-                  placeholder="https://example.com"
-                  value={url}
-                  onChange={(event) => setUrl(event.target.value)}
-                  disabled={isSubmitting}
-                  required
-                />
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Running audit..." : "Run audit"}
-                </Button>
-              </div>
-              {formError ? (
-                <p className="text-sm text-rose-400">{formError}</p>
-              ) : (
-                <p className="text-xs text-muted">
-                  Results typically return in under 10 seconds.
-                </p>
-              )}
-              {status ? (
-                <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted">
-                  {status}
-                </p>
-              ) : null}
-            </form>
-            <div className="grid gap-4 sm:grid-cols-3">
-              {[
-                {
-                  label: "Runtime",
-                  value: "Cloudflare Workers",
-                },
-                {
-                  label: "Mode",
-                  value: "On-demand or proxy",
-                },
-                {
-                  label: "Signals",
-                  value: "Alt text, ARIA, contrast",
-                },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-lg border border-subtle bg-surface-2 p-4"
-                >
-                  <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted">
-                    {item.label}
-                  </p>
-                  <p className="mt-2 text-sm text-foreground">{item.value}</p>
-                </div>
-              ))}
-            </div>
+        <div className="mx-auto max-w-3xl space-y-6 animate-fade-up">
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge>Edge-native</Badge>
+            <span className="text-xs font-mono uppercase tracking-[0.3em] text-muted">
+              Prism Audit Console
+            </span>
           </div>
-          <Card
-            className="animate-fade-up"
-            style={{ animationDelay: "120ms" }}
-          >
-            <div className="p-6 space-y-6">
-              <div>
-                <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted">
-                  Live signal
-                </p>
-                <h2 className="mt-2 text-xl font-semibold text-foreground">
-                  Audit pipeline
-                </h2>
-                <p className="mt-2 text-sm text-muted-2">
-                  Prism streams semantic checks from the edge and persists
-                  evidence for every run. Every audit is queryable by URL or ID.
-                </p>
-              </div>
-              <div className="space-y-4">
-                {[
-                  "Capture DOM and ARIA tree",
-                  "Run contrast and heading rules",
-                  "Store results in D1 with timestamps",
-                ].map((step, index) => (
-                  <div
-                    key={step}
-                    className="flex items-start gap-3 rounded-lg border border-subtle bg-surface-2 p-4"
-                  >
-                    <span className="mt-1 h-2 w-2 rounded-full bg-[color:var(--accent)]" />
-                    <div>
-                      <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted">
-                        Stage {index + 1}
-                      </p>
-                      <p className="mt-1 text-sm text-foreground">{step}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+            Launch accessibility audits from the edge.
+          </h1>
+          <p className="text-base text-muted-2 sm:text-lg">
+            Prism runs Lighthouse-inspired checks directly on Cloudflare Workers.
+            Validate contrast, semantics, and structure without leaving your
+            workflow.
+          </p>
+          <form className="space-y-3" onSubmit={handleSubmit}>
+            <Label htmlFor="audit-url">Target URL</Label>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Input
+                id="audit-url"
+                name="url"
+                type="url"
+                placeholder="https://example.com"
+                value={url}
+                onChange={(event) => setUrl(event.target.value)}
+                disabled={isSubmitting}
+                required
+              />
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Running audit..." : "Run audit"}
+              </Button>
             </div>
-          </Card>
+            {formError ? (
+              <p className="text-sm text-rose-400">{formError}</p>
+            ) : (
+              <p className="text-xs text-muted">
+                Results typically return in under 10 seconds.
+              </p>
+            )}
+            {status ? (
+              <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted">
+                {status}
+              </p>
+            ) : null}
+          </form>
         </div>
       </section>
 

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 
 export function SiteHeader() {
   return (
@@ -28,9 +27,6 @@ export function SiteHeader() {
           >
             History
           </Link>
-          <Badge variant="outline" className="hidden bg-surface-2 sm:inline-flex">
-            Cloudflare Workers
-          </Badge>
         </nav>
       </div>
     </header>

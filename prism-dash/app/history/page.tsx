@@ -1,17 +1,6 @@
-import Link from "next/link";
 import { ErrorState } from "@/components/error-state";
-import { ModeBadge } from "@/components/mode-badge";
-import { Card } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { getAuditsByUrl, getErrorMessage, getRecentAudits } from "@/lib/api";
-import { formatTimestamp } from "@/lib/format";
+import { HistoryClient } from "@/components/history-client";
+import { getErrorMessage, getRecentAudits } from "@/lib/api";
 import type { AuditSummary } from "@/lib/types";
 
 interface HistoryPageProps {
@@ -20,7 +9,7 @@ interface HistoryPageProps {
 
 export default async function HistoryPage({ searchParams }: HistoryPageProps) {
   const resolvedSearchParams = await Promise.resolve(searchParams);
-  const filterUrl =
+  const initialUrl =
     typeof resolvedSearchParams?.url === "string"
       ? resolvedSearchParams.url
       : undefined;
@@ -28,7 +17,7 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
   let errorMessage: string | null = null;
 
   try {
-    audits = filterUrl ? await getAuditsByUrl(filterUrl) : await getRecentAudits();
+    audits = await getRecentAudits();
   } catch (error) {
     errorMessage = getErrorMessage(error);
   }
@@ -54,72 +43,12 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
           <h1 className="text-2xl font-semibold text-foreground">
             Historical runs
           </h1>
-          <p className="break-all text-sm text-muted-2">
-            {filterUrl
-              ? `Showing audits for ${filterUrl}`
-              : "Showing the most recent audits across all URLs."}
+          <p className="text-sm text-muted-2">
+            Filter the most recent audits across URLs, scores, and modes.
           </p>
         </div>
-        {filterUrl ? (
-          <Link
-            href="/history"
-            className="text-xs font-mono uppercase tracking-[0.2em] text-muted transition hover:text-foreground"
-          >
-            Clear filter
-          </Link>
-        ) : null}
       </div>
-
-      {audits.length === 0 ? (
-        <Card className="p-6">
-          <p className="text-sm text-muted-2">
-            No audits recorded yet. Run an audit from the dashboard.
-          </p>
-        </Card>
-      ) : (
-        <Card className="overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>URL</TableHead>
-                <TableHead>Score</TableHead>
-                <TableHead>Issues</TableHead>
-                <TableHead>Mode</TableHead>
-                <TableHead>Timestamp</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {audits.map((audit) => {
-                const scoreTone =
-                  audit.score >= 80
-                    ? "text-emerald-400"
-                    : audit.score >= 50
-                      ? "text-amber-400"
-                      : "text-rose-500";
-
-                return (
-                  <TableRow key={audit.auditId}>
-                    <TableCell className="max-w-[320px]">
-                      <Link
-                        href={`/audit/${audit.auditId}`}
-                        className="block truncate text-sm text-foreground transition hover:text-[color:var(--accent)]"
-                      >
-                        {audit.url}
-                      </Link>
-                    </TableCell>
-                    <TableCell className={scoreTone}>{audit.score}</TableCell>
-                    <TableCell>{audit.totalIssues}</TableCell>
-                    <TableCell>
-                      <ModeBadge mode={audit.mode} />
-                    </TableCell>
-                    <TableCell>{formatTimestamp(audit.createdAt)}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Card>
-      )}
+      <HistoryClient audits={audits} initialUrl={initialUrl} />
     </div>
   );
 }
